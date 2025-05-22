@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Seller Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <h1 class="mb-4">Seller Dashboard</h1>
+    <a href="admin.html">admin</a>
+
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h6>Today's Sales</h6>
+            <h3 id="todaySalesTotal">Ksh 0.00</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="mb-4">Product Management</h2>
+    <div class="table-responsive">
+      <div class="mb-3">
+        <input type="text" id="searchInput" class="form-control" placeholder="Search by name or units">
+      </div>
+      <table class="table table-bordered" id="productsTable">
+        <thead class="table-dark">
+          <tr>
+            <th>Product Name</th>
+            <th>Fractions</th>
+            <th>Sell</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Firebase + App Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, doc, getDoc, updateDoc, addDoc, query, where, Timestamp, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCvaeT-85wmY2D2pfja1l0QC9hZHXVAEb0",
+      authDomain: "shop-2a9f2.firebaseapp.com",
+      projectId: "shop-2a9f2",
+      storageBucket: "shop-2a9f2.appspot.com",
+      messagingSenderId: "764656202494",
+      appId: "1:764656202494:web:2453fe5a652f89b656ebaf"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const productsTable = document.querySelector("#productsTable tbody");
+      const todaySalesTotal = document.getElementById("todaySalesTotal");
+      const searchInput = document.getElementById("searchInput");
+
+      function getStartOfToday() {
+        const now = new Date();
+        return Timestamp.fromDate(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
+      }
+
+      function showToast(message, isError = false) {
+        alert(message); // You can replace this with a better toast
+      }
+
+      async function sellFraction(productId, fractionIdx) {
+        const productRef = doc(db, 'products', productId);
+        const productSnap = await getDoc(productRef);
+        if (!productSnap.exists()) return;
+
+        const product = productSnap.data();
+        const fraction = product.fractions[fractionIdx];
+
+        if (fraction.stock <= 0) {
+          showToast('Out of stock!', true);
+          return;
+        }
+
+        product.fractions[fractionIdx].stock -= 1;
+        await updateDoc(productRef, { fractions: product.fractions });
+
+        await addDoc(collection(db, 'sales'), {
+          productId,
+          fractionIndex: fractionIdx,
+          price: fraction.price,
+          timestamp: serverTimestamp()
+        });
+
+        showToast(`Sold 1 x ${fraction.quantity}${fraction.unit} (${product.name})`);
+      }
+
+      function renderProducts() {
+        onSnapshot(collection(db, 'products'), (snapshot) => {
+          productsTable.innerHTML = '';
+          snapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            const id = docSnap.id;
+
+            let fractionsHtml = '';
+            let sellButtonsHtml = '';
+            data.fractions.forEach((frac, i) => {
+              fractionsHtml += `${frac.quantity}${frac.unit} - Ksh ${frac.price.toFixed(2)} - Stock: ${frac.stock || 0}<br>`;
+              sellButtonsHtml += `<button class="btn btn-sm btn-success my-1 sell-btn" data-id="${id}" data-idx="${i}">Sell ${frac.quantity}${frac.unit}</button><br>`;
+            });
+
+            const lowStock = data.fractions.some(f => f.stock < 5);
+
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${data.name} ${lowStock ? '<span class="badge bg-warning text-dark">Low Stock</span>' : ''}</td>
+              <td>${fractionsHtml}</td>
+              <td>${sellButtonsHtml}</td>
+            `;
+            productsTable.appendChild(row);
+          });
+
+          document.querySelectorAll('.sell-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const id = btn.dataset.id;
+              const idx = parseInt(btn.dataset.idx);
+              sellFraction(id, idx);
+            });
+          });
+        });
+      }
+
+      function listenToSales() {
+        const salesQuery = query(collection(db, 'sales'), where("timestamp", ">=", getStartOfToday()));
+        onSnapshot(salesQuery, (snapshot) => {
+          let total = 0;
+          snapshot.forEach(doc => {
+            total += doc.data().price;
+          });
+          todaySalesTotal.textContent = `Ksh ${total.toFixed(2)}`;
+        });
+      }
+
+      searchInput.addEventListener("input", () => {
+        const filter = searchInput.value.toLowerCase();
+        document.querySelectorAll("#productsTable tbody tr").forEach((row) => {
+          const name = row.cells[0].textContent.toLowerCase();
+          const units = row.cells[1].textContent.toLowerCase();
+          if (name.includes(filter) || units.includes(filter)) {
+            row.style.display = "";
+          } else {
+            row.style.display = "none";
+          }
+        });
+      });
+
+      renderProducts();
+      listenToSales();
+    });
+  </script>
+</body>
+</html>
