@@ -21,52 +21,52 @@
   </style>
 </head>
 <body class="bg-light">
-
 <div class="container py-5">
   <h2 class="mb-4">Admin - Manage Products</h2>
-<a href="Shop.html">seller</a>
+  <a href="Shop.html">Seller View</a>
+
+  <div class="mb-3">
+    <input type="text" class="form-control" id="searchInput" placeholder="Search by product name...">
+  </div>
+
   <div class="mb-4 p-3 bg-white rounded shadow-sm d-flex justify-content-between">
-  <h5>Total Sales: Ksh <span id="totalSales">0</span></h5>
-  <h5>Total Stock: <span id="totalStock">0</span> items</h5>
-</div>
-<div class="card shadow-sm mb-4">
-  <div class="card-body">
-    <h5 class="card-title">Today's Sales</h5>
-    <div class="d-flex align-items-center">
-      <strong id="adminSalesTotal" class="me-2 d-none">Ksh 0.00</strong>
-      <div id="adminSalesSpinner" class="spinner-border spinner-border-sm text-primary" role="status"></div>
+    <h5>Total Sales: Ksh <span id="totalSales">0</span></h5>
+    <h5>Total Stock: <span id="totalStock">0</span> items</h5>
+  </div>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Today's Sales</h5>
+      <div class="d-flex align-items-center">
+        <strong id="adminSalesTotal" class="me-2 d-none">Ksh 0.00</strong>
+        <div id="adminSalesSpinner" class="spinner-border spinner-border-sm text-primary" role="status"></div>
+      </div>
     </div>
   </div>
-</div>
+
   <button class="btn btn-success mb-3" id="btnShowAddForm">Add New Product</button>
 
   <div id="productFormContainer" class="mb-4" style="display:none;">
     <h4 id="formTitle">Add New Product</h4>
     <form id="productForm">
-
       <input type="hidden" id="productId" />
-
       <div class="mb-3">
         <label for="productName" class="form-label">Product Name</label>
         <input type="text" id="productName" class="form-control" required />
       </div>
-
       <div class="mb-3">
         <label for="bulkQuantity" class="form-label">Bulk Quantity</label>
         <input type="number" id="bulkQuantity" class="form-control" min="0" step="any" required />
       </div>
-
       <div class="mb-3">
         <label for="bulkUnit" class="form-label">Bulk Unit</label>
         <input type="text" id="bulkUnit" class="form-control" placeholder="e.g. kg, liters" required />
       </div>
-
       <div class="mb-3">
         <label class="form-label">Fractions</label>
         <div id="fractionsContainer"></div>
         <button type="button" class="btn btn-secondary btn-sm" id="addFractionBtn">Add Fraction</button>
       </div>
-
       <button type="submit" class="btn btn-primary">Save Product</button>
       <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
     </form>
@@ -93,15 +93,13 @@
       <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
     </div>
   </div>
-</div><script type="module">
+</div>
+
+<script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
   import {
-    getFirestore,
-    collection,
-    query,
-    where,
-    onSnapshot,
-    Timestamp
+    getFirestore, collection, query, where, onSnapshot, Timestamp,
+    doc, getDoc, updateDoc, deleteDoc, addDoc
   } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -116,42 +114,7 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  function getStartOfToday() {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    return Timestamp.fromDate(now);
-  }
-
-  function fetchTodaySalesTotal() {
-    const salesTotal = document.getElementById("adminSalesTotal");
-    const spinner = document.getElementById("adminSalesSpinner");
-
-    const today = getStartOfToday();
-    const salesQuery = query(collection(db, 'sales'), where("timestamp", ">=", today));
-
-    spinner.style.display = "block";
-
-    onSnapshot(salesQuery, (snapshot) => {
-      let total = 0;
-      snapshot.forEach(doc => {
-        const sale = doc.data();
-        if (sale.price) total += sale.price;
-      });
-
-      salesTotal.textContent = `Ksh ${total.toFixed(2)}`;
-      salesTotal.classList.remove("d-none");
-      spinner.style.display = "none";
-    }, (error) => {
-      console.error("Failed to fetch sales:", error);
-      spinner.innerHTML = "<div class='text-danger'>Failed to load</div>";
-    });
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    fetchTodaySalesTotal();
-  });
-
-
+  const searchInput = document.getElementById('searchInput');
   const productTableBody = document.getElementById('productTableBody');
   const productFormContainer = document.getElementById('productFormContainer');
   const productForm = document.getElementById('productForm');
@@ -162,6 +125,8 @@
   const toast = new bootstrap.Toast(toastElement);
   const toastBody = toastElement.querySelector('.toast-body');
   const formTitle = document.getElementById('formTitle');
+
+  let allProducts = [];
 
   function showToast(msg, isError = false) {
     toastElement.classList.remove('text-bg-success', 'text-bg-danger');
@@ -194,9 +159,7 @@
       <input type="number" class="form-control fraction-stock" placeholder="Stock" min="0" step="1" required value="${frac.stock || 0}" style="width:100px" />
       <button type="button" class="btn btn-danger btn-sm remove-fraction-btn">Remove</button>
     `;
-    div.querySelector('.remove-fraction-btn').addEventListener('click', () => {
-      div.remove();
-    });
+    div.querySelector('.remove-fraction-btn').addEventListener('click', () => div.remove());
     fractionsContainer.appendChild(div);
   }
 
@@ -204,18 +167,15 @@
     productForm.reset();
     document.getElementById('productId').value = '';
     fractionsContainer.innerHTML = '';
-    addFractionInput(); // Add one default
+    addFractionInput();
   }
 
-  onSnapshot(collection(db, 'products'), (snapshot) => {
+  function renderProducts(products) {
     productTableBody.innerHTML = '';
     let totalSales = 0;
     let totalStock = 0;
 
-    snapshot.forEach(docSnap => {
-      const data = docSnap.data();
-      const id = docSnap.id;
-
+    products.forEach(({ id, data }) => {
       data.fractions.forEach(frac => {
         totalSales += (frac.price || 0) * (frac.stock || 0);
         totalStock += frac.stock || 0;
@@ -242,22 +202,31 @@
     document.getElementById('totalSales').textContent = totalSales.toFixed(2);
     document.getElementById('totalStock').textContent = totalStock;
 
-    document.querySelectorAll('.edit-btn').forEach(btn => {
-      btn.addEventListener('click', () => editProduct(btn.dataset.id));
-    });
+    document.querySelectorAll('.edit-btn').forEach(btn =>
+      btn.addEventListener('click', () => editProduct(btn.dataset.id))
+    );
+    document.querySelectorAll('.delete-btn').forEach(btn =>
+      btn.addEventListener('click', () => deleteProduct(btn.dataset.id))
+    );
+  }
 
-    document.querySelectorAll('.delete-btn').forEach(btn => {
-      btn.addEventListener('click', () => deleteProduct(btn.dataset.id));
-    });
+  searchInput.addEventListener('input', () => {
+    const keyword = searchInput.value.toLowerCase();
+    const filtered = allProducts.filter(p =>
+      p.data.name.toLowerCase().includes(keyword)
+    );
+    renderProducts(filtered);
+  });
+
+  onSnapshot(collection(db, 'products'), (snapshot) => {
+    allProducts = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
+    renderProducts(allProducts);
   });
 
   async function editProduct(id) {
     const docRef = doc(db, 'products', id);
     const docSnap = await getDoc(docRef);
-    if (!docSnap.exists()) {
-      showToast('Product not found', true);
-      return;
-    }
+    if (!docSnap.exists()) return showToast('Product not found', true);
 
     const data = docSnap.data();
     document.getElementById('productId').value = id;
@@ -306,9 +275,42 @@
       showToast('Error saving product: ' + error.message, true);
     }
   });
+
+  function getStartOfToday() {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return Timestamp.fromDate(now);
+  }
+
+  function fetchTodaySalesTotal() {
+    const salesTotal = document.getElementById("adminSalesTotal");
+    const spinner = document.getElementById("adminSalesSpinner");
+    const today = getStartOfToday();
+
+    spinner.style.display = "block";
+    const salesQuery = query(collection(db, 'sales'), where("timestamp", ">=", today));
+
+    onSnapshot(salesQuery, (snapshot) => {
+      let total = 0;
+      snapshot.forEach(doc => {
+        const sale = doc.data();
+        if (sale.price) total += sale.price;
+      });
+
+      salesTotal.textContent = `Ksh ${total.toFixed(2)}`;
+      salesTotal.classList.remove("d-none");
+      spinner.style.display = "none";
+    }, (error) => {
+      console.error("Failed to fetch sales:", error);
+      spinner.innerHTML = "<div class='text-danger'>Failed to load</div>";
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    fetchTodaySalesTotal();
+  });
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
-</html>
+        </html>
