@@ -2,163 +2,630 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Seller Dashboard</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-</head>
-<body class="bg-light">
-  <div class="container py-4">
-    <h1 class="mb-4">Seller Dashboard</h1>
-    <a href="index.html">admin</a>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin - Product Management Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #4361ee;
+      --secondary: #3f37c9;
+      --success: #4cc9f0;
+      --dark: #1d3557;
+      --light: #f8f9fa;
+      --danger: #e63946;
+      --warning: #f8961e;
+    }
 
-    <div class="row mb-4">
-      <div class="col-md-4">
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <h6>Today's Sales</h6>
-            <h3 id="todaySalesTotal">Ksh 0.00</h3>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .dashboard-container {
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .sidebar {
+      background: var(--dark);
+      color: white;
+      border-radius: 15px;
+      height: fit-content;
+      position: sticky;
+      top: 20px;
+    }
+
+    .sidebar-brand {
+      padding: 25px 20px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar-nav {
+      padding: 15px 0;
+    }
+
+    .nav-item {
+      margin: 5px 0;
+    }
+
+    .nav-link {
+      color: rgba(255, 255, 255, 0.8);
+      padding: 12px 20px;
+      border-left: 3px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+      border-left: 3px solid var(--success);
+    }
+
+    .nav-link i {
+      width: 20px;
+      margin-right: 10px;
+    }
+
+    .main-content {
+      padding-left: 25px;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      transition: transform 0.3s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .stat-card i {
+      font-size: 2.5rem;
+      opacity: 0.8;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .stat-label {
+      opacity: 0.9;
+      font-size: 0.9rem;
+    }
+
+    .product-card {
+      border: none;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      transition: all 0.3s;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .product-card:hover {
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .product-header {
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      color: white;
+      border-radius: 12px 12px 0 0;
+      padding: 15px;
+    }
+
+    .fraction-badge {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border-radius: 20px;
+      padding: 5px 12px;
+      margin: 2px;
+      font-size: 0.8rem;
+    }
+
+    .action-btn {
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 3px;
+      transition: all 0.3s;
+    }
+
+    .search-box {
+      position: relative;
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6c757d;
+    }
+
+    .search-box input {
+      padding-left: 40px;
+      border-radius: 50px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-glass {
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+    }
+
+    .form-control {
+      border-radius: 8px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      padding: 10px 15px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+    }
+
+    .toast-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 1055;
+    }
+
+    .fraction-row {
+      background: rgba(0, 0, 0, 0.03);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-left: 4px solid var(--primary);
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        padding-left: 0;
+        padding-top: 20px;
+      }
+      
+      .sidebar {
+        position: relative;
+        margin-bottom: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="dashboard-container">
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Sidebar -->
+      <div class="col-lg-3">
+        <div class="sidebar glass-card">
+          <div class="sidebar-brand">
+            <h3><i class="fas fa-store me-2"></i>Admin Panel</h3>
+            <p class="mb-0 text-muted">Product Management</p>
+          </div>
+          <div class="sidebar-nav">
+            <ul class="nav flex-column">
+              <li class="nav-item">
+                <a class="nav-link active" href="#"><i class="fas fa-boxes"></i> Products</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#"><i class="fas fa-chart-line"></i> Analytics</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#"><i class="fas fa-cog"></i> Settings</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="Shop.html"><i class="fas fa-eye"></i> Seller View</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="col-lg-9">
+        <div class="main-content">
+          <!-- Header -->
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-white"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+            <div class="search-box">
+              <i class="fas fa-search"></i>
+              <input type="text" class="form-control" id="searchInput" placeholder="Search products..." style="width: 300px;">
+            </div>
+          </div>
+
+          <!-- Stats Cards -->
+          <div class="row mb-4">
+            <div class="col-md-4">
+              <div class="stat-card glass-card">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <div class="stat-label">Total Sales Value</div>
+                    <div class="stat-value">Ksh <span id="totalSales">0</span></div>
+                  </div>
+                  <i class="fas fa-dollar-sign"></i>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stat-card glass-card">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <div class="stat-label">Total Stock</div>
+                    <div class="stat-value"><span id="totalStock">0</span> items</div>
+                  </div>
+                  <i class="fas fa-boxes"></i>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="stat-card glass-card">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <div class="stat-label">Today's Sales</div>
+                    <div class="stat-value">Ksh <span id="adminSalesTotal">0.00</span></div>
+                  </div>
+                  <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div id="adminSalesSpinner" class="spinner-border spinner-border-sm text-light mt-2" role="status"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Products Section -->
+          <div class="glass-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h4 class="mb-0"><i class="fas fa-box me-2"></i>Product Inventory</h4>
+              <button class="btn btn-primary" id="btnShowAddForm">
+                <i class="fas fa-plus me-2"></i>Add New Product
+              </button>
+            </div>
+
+            <!-- Products Grid -->
+            <div id="productsGrid" class="row"></div>
           </div>
         </div>
       </div>
     </div>
+  </div>
+</div>
 
-    <h2 class="mb-4">Product Management</h2>
-    <div class="table-responsive">
-      <div class="mb-3">
-        <input type="text" id="searchInput" class="form-control" placeholder="Search by name or units">
+<!-- Add/Edit Product Modal -->
+<div class="modal fade" id="productModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content modal-glass">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">Add New Product</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <table class="table table-bordered" id="productsTable">
-        <thead class="table-dark">
-          <tr>
-            <th>Product Name</th>
-            <th>Fractions</th>
-            <th>Sell</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div class="modal-body">
+        <form id="productForm">
+          <input type="hidden" id="productId" />
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="productName" class="form-label">Product Name</label>
+                <input type="text" id="productName" class="form-control" required />
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="mb-3">
+                <label for="bulkQuantity" class="form-label">Bulk Quantity</label>
+                <input type="number" id="bulkQuantity" class="form-control" min="0" step="any" required />
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="mb-3">
+                <label for="bulkUnit" class="form-label">Bulk Unit</label>
+                <input type="text" id="bulkUnit" class="form-control" placeholder="kg, liters" required />
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Fractions <small class="text-muted">(Smaller units for sale)</small></label>
+            <div id="fractionsContainer"></div>
+            <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="addFractionBtn">
+              <i class="fas fa-plus me-1"></i>Add Fraction
+            </button>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" form="productForm" class="btn btn-primary">Save Product</button>
+      </div>
     </div>
   </div>
+</div>
 
-  <!-- Firebase + App Logic -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, doc, getDoc, updateDoc, addDoc, query, where, Timestamp, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+<!-- Toast Notification -->
+<div class="toast-container">
+  <div id="toastMessage" class="toast align-items-center text-white border-0" role="alert">
+    <div class="d-flex">
+      <div class="toast-body"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCvaeT-85wmY2D2pfja1l0QC9hZHXVAEb0",
-      authDomain: "shop-2a9f2.firebaseapp.com",
-      projectId: "shop-2a9f2",
-      storageBucket: "shop-2a9f2.appspot.com",
-      messagingSenderId: "764656202494",
-      appId: "1:764656202494:web:2453fe5a652f89b656ebaf"
-    };
+<script type="module">
+  // Your existing Firebase JavaScript code goes here
+  // Only updating the rendering functions to work with the new UI
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
+  import {
+    getFirestore, collection, query, where, onSnapshot, Timestamp,
+    doc, getDoc, updateDoc, deleteDoc, addDoc
+  } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const productsTable = document.querySelector("#productsTable tbody");
-      const todaySalesTotal = document.getElementById("todaySalesTotal");
-      const searchInput = document.getElementById("searchInput");
+  const firebaseConfig = {
+    apiKey: "AIzaSyCvaeT-85wmY2D2pfja1l0QC9hZHXVAEb0",
+    authDomain: "shop-2a9f2.firebaseapp.com",
+    projectId: "shop-2a9f2",
+    storageBucket: "shop-2a9f2.appspot.com",
+    messagingSenderId: "764656202494",
+    appId: "1:764656202494:web:2453fe5a652f89b656ebaf"
+  };
 
-      function getStartOfToday() {
-        const now = new Date();
-        return Timestamp.fromDate(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
-      }
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-      function showToast(message, isError = false) {
-        alert(message); // You can replace this with a better toast
-      }
+  // UI Elements
+  const searchInput = document.getElementById('searchInput');
+  const productsGrid = document.getElementById('productsGrid');
+  const productForm = document.getElementById('productForm');
+  const btnShowAddForm = document.getElementById('btnShowAddForm');
+  const fractionsContainer = document.getElementById('fractionsContainer');
+  const productModal = new bootstrap.Modal(document.getElementById('productModal'));
+  const toastElement = document.getElementById('toastMessage');
+  const toast = new bootstrap.Toast(toastElement);
+  const toastBody = toastElement.querySelector('.toast-body');
+  const modalTitle = document.getElementById('modalTitle');
 
-      async function sellFraction(productId, fractionIdx) {
-        const productRef = doc(db, 'products', productId);
-        const productSnap = await getDoc(productRef);
-        if (!productSnap.exists()) return;
+  let allProducts = [];
 
-        const product = productSnap.data();
-        const fraction = product.fractions[fractionIdx];
+  function showToast(msg, isError = false) {
+    toastElement.classList.remove('bg-success', 'bg-danger');
+    toastElement.classList.add(isError ? 'bg-danger' : 'bg-success');
+    toastBody.textContent = msg;
+    toast.show();
+  }
 
-        if (fraction.stock <= 0) {
-          showToast('Out of stock!', true);
-          return;
-        }
+  // Event Listeners
+  btnShowAddForm.addEventListener('click', () => {
+    resetForm();
+    modalTitle.textContent = 'Add New Product';
+    productModal.show();
+  });
 
-        product.fractions[fractionIdx].stock -= 1;
-        await updateDoc(productRef, { fractions: product.fractions });
+  document.getElementById('addFractionBtn').addEventListener('click', () => {
+    addFractionInput();
+  });
 
-        await addDoc(collection(db, 'sales'), {
-          productId,
-          fractionIndex: fractionIdx,
-          price: fraction.price,
-          timestamp: serverTimestamp()
-        });
+  function addFractionInput(frac = {}) {
+    const div = document.createElement('div');
+    div.classList.add('fraction-row');
+    div.innerHTML = `
+      <div class="row g-2 align-items-center">
+        <div class="col-md-3">
+          <input type="number" class="form-control fraction-quantity" placeholder="Quantity" min="0" step="any" required value="${frac.quantity || ''}" />
+        </div>
+        <div class="col-md-2">
+          <input type="text" class="form-control fraction-unit" placeholder="Unit" required value="${frac.unit || ''}" />
+        </div>
+        <div class="col-md-3">
+          <input type="number" class="form-control fraction-price" placeholder="Price (Ksh)" min="0" step="any" required value="${frac.price || ''}" />
+        </div>
+        <div class="col-md-2">
+          <input type="number" class="form-control fraction-stock" placeholder="Stock" min="0" step="1" required value="${frac.stock || 0}" />
+        </div>
+        <div class="col-md-2">
+          <button type="button" class="btn btn-danger btn-sm w-100 remove-fraction-btn">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    `;
+    div.querySelector('.remove-fraction-btn').addEventListener('click', () => div.remove());
+    fractionsContainer.appendChild(div);
+  }
 
-        showToast(`Sold 1 x ${fraction.quantity}${fraction.unit} (${product.name})`);
-      }
+  function resetForm() {
+    productForm.reset();
+    document.getElementById('productId').value = '';
+    fractionsContainer.innerHTML = '';
+    addFractionInput();
+  }
 
-      function renderProducts() {
-        onSnapshot(collection(db, 'products'), (snapshot) => {
-          productsTable.innerHTML = '';
-          snapshot.forEach(docSnap => {
-            const data = docSnap.data();
-            const id = docSnap.id;
+  function renderProducts(products) {
+    productsGrid.innerHTML = '';
+    let totalSales = 0;
+    let totalStock = 0;
 
-            let fractionsHtml = '';
-            let sellButtonsHtml = '';
-            data.fractions.forEach((frac, i) => {
-              fractionsHtml += `${frac.quantity}${frac.unit} - Ksh ${frac.price.toFixed(2)} - Stock: ${frac.stock || 0}<br>`;
-              sellButtonsHtml += `<button class="btn btn-sm btn-success my-1 sell-btn" data-id="${id}" data-idx="${i}">Sell ${frac.quantity}${frac.unit}</button><br>`;
-            });
-
-            const lowStock = data.fractions.some(f => f.stock < 5);
-
-            const row = document.createElement("tr");
-            row.innerHTML = `
-              <td>${data.name} ${lowStock ? '<span class="badge bg-warning text-dark">Low Stock</span>' : ''}</td>
-              <td>${fractionsHtml}</td>
-              <td>${sellButtonsHtml}</td>
-            `;
-            productsTable.appendChild(row);
-          });
-
-          document.querySelectorAll('.sell-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-              const id = btn.dataset.id;
-              const idx = parseInt(btn.dataset.idx);
-              sellFraction(id, idx);
-            });
-          });
-        });
-      }
-
-      function listenToSales() {
-        const salesQuery = query(collection(db, 'sales'), where("timestamp", ">=", getStartOfToday()));
-        onSnapshot(salesQuery, (snapshot) => {
-          let total = 0;
-          snapshot.forEach(doc => {
-            total += doc.data().price;
-          });
-          todaySalesTotal.textContent = `Ksh ${total.toFixed(2)}`;
-        });
-      }
-
-      searchInput.addEventListener("input", () => {
-        const filter = searchInput.value.toLowerCase();
-        document.querySelectorAll("#productsTable tbody tr").forEach((row) => {
-          const name = row.cells[0].textContent.toLowerCase();
-          const units = row.cells[1].textContent.toLowerCase();
-          if (name.includes(filter) || units.includes(filter)) {
-            row.style.display = "";
-          } else {
-            row.style.display = "none";
-          }
-        });
+    products.forEach(({ id, data }) => {
+      data.fractions.forEach(frac => {
+        totalSales += (frac.price || 0) * (frac.stock || 0);
+        totalStock += frac.stock || 0;
       });
 
-      renderProducts();
-      listenToSales();
+      const fractionsHtml = data.fractions.map(frac => 
+        `<span class="fraction-badge">${frac.quantity}${frac.unit} - Ksh ${frac.price.toFixed(2)}</span>`
+      ).join('');
+
+      const card = document.createElement('div');
+      card.className = 'col-md-6 col-lg-4';
+      card.innerHTML = `
+        <div class="card product-card glass-card">
+          <div class="product-header">
+            <h6 class="mb-1">${data.name}</h6>
+            <small>${data.bulkQuantity} ${data.bulkUnit}</small>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              ${fractionsHtml}
+            </div>
+            <div class="d-flex justify-content-between">
+              <span class="badge bg-light text-dark">
+                <i class="fas fa-box me-1"></i>Total Stock: ${data.fractions.reduce((sum, f) => sum + (f.stock || 0), 0)}
+              </span>
+              <div>
+                <button class="btn btn-sm action-btn btn-warning edit-btn" data-id="${id}" title="Edit">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm action-btn btn-danger delete-btn" data-id="${id}" title="Delete">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      productsGrid.appendChild(card);
     });
-  </script>
+
+    document.getElementById('totalSales').textContent = totalSales.toFixed(2);
+    document.getElementById('totalStock').textContent = totalStock;
+
+    // Add event listeners to buttons
+    document.querySelectorAll('.edit-btn').forEach(btn =>
+      btn.addEventListener('click', () => editProduct(btn.dataset.id))
+    );
+    document.querySelectorAll('.delete-btn').forEach(btn =>
+      btn.addEventListener('click', () => deleteProduct(btn.dataset.id))
+    );
+  }
+
+  searchInput.addEventListener('input', () => {
+    const keyword = searchInput.value.toLowerCase();
+    const filtered = allProducts.filter(p =>
+      p.data.name.toLowerCase().includes(keyword)
+    );
+    renderProducts(filtered);
+  });
+
+  // Firebase data subscription
+  onSnapshot(collection(db, 'products'), (snapshot) => {
+    allProducts = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
+    renderProducts(allProducts);
+  });
+
+  async function editProduct(id) {
+    const docRef = doc(db, 'products', id);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) return showToast('Product not found', true);
+
+    const data = docSnap.data();
+    document.getElementById('productId').value = id;
+    document.getElementById('productName').value = data.name;
+    document.getElementById('bulkQuantity').value = data.bulkQuantity;
+    document.getElementById('bulkUnit').value = data.bulkUnit;
+    fractionsContainer.innerHTML = '';
+    data.fractions.forEach(frac => addFractionInput(frac));
+    modalTitle.textContent = 'Edit Product';
+    productModal.show();
+  }
+
+  async function deleteProduct(id) {
+    const product = allProducts.find(p => p.id === id);
+    if (!confirm(`Are you sure you want to delete "${product.data.name}"?`)) return;
+    
+    try {
+      await deleteDoc(doc(db, 'products', id));
+      showToast('Product deleted successfully');
+    } catch (error) {
+      showToast('Error deleting product: ' + error.message, true);
+    }
+  }
+
+  productForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('productId').value;
+    const name = document.getElementById('productName').value.trim();
+    const bulkQuantity = parseFloat(document.getElementById('bulkQuantity').value);
+    const bulkUnit = document.getElementById('bulkUnit').value.trim();
+
+    const fractions = Array.from(fractionsContainer.children).map(row => ({
+      quantity: parseFloat(row.querySelector('.fraction-quantity').value),
+      unit: row.querySelector('.fraction-unit').value.trim(),
+      price: parseFloat(row.querySelector('.fraction-price').value),
+      stock: parseInt(row.querySelector('.fraction-stock').value)
+    }));
+
+    const data = { name, bulkQuantity, bulkUnit, fractions };
+
+    try {
+      if (id) {
+        await updateDoc(doc(db, 'products', id), data);
+        showToast('Product updated successfully');
+      } else {
+        await addDoc(collection(db, 'products'), data);
+        showToast('Product added successfully');
+      }
+      resetForm();
+      productModal.hide();
+    } catch (error) {
+      showToast('Error saving product: ' + error.message, true);
+    }
+  });
+
+  // Today's sales function (keep your existing implementation)
+  function getStartOfToday() {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return Timestamp.fromDate(now);
+  }
+
+  function fetchTodaySalesTotal() {
+    const salesTotal = document.getElementById("adminSalesTotal");
+    const spinner = document.getElementById("adminSalesSpinner");
+    const today = getStartOfToday();
+
+    spinner.style.display = "block";
+    const salesQuery = query(collection(db, 'sales'), where("timestamp", ">=", today));
+
+    onSnapshot(salesQuery, (snapshot) => {
+      let total = 0;
+      snapshot.forEach(doc => {
+        const sale = doc.data();
+        if (sale.price) total += sale.price;
+      });
+
+      salesTotal.textContent = total.toFixed(2);
+      spinner.style.display = "none";
+    }, (error) => {
+      console.error("Failed to fetch sales:", error);
+      spinner.innerHTML = "<span class='text-light'>Error</span>";
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    fetchTodaySalesTotal();
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
