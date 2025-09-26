@@ -1,316 +1,353 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin - Manage Products</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop Inventory - Login / Signup</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    .toast-container {
-      position: fixed;
-      top: 1rem;
-      right: 1rem;
-      z-index: 1055;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    .fraction-row {
-      margin-bottom: 0.5rem;
-      padding: 0.5rem;
-      border: 1px solid #ddd;
-      border-radius: 5px;
+
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      transition: transform 0.3s ease;
+    }
+
+    .container:hover {
+      transform: translateY(-5px);
+    }
+
+    .header {
+      background: linear-gradient(to right, #4a6fa5, #6b8cbc);
+      color: white;
+      padding: 25px 30px;
+      text-align: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+
+    .logo i {
+      font-size: 32px;
+      margin-right: 10px;
+    }
+
+    .logo h1 {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .form-container {
+      padding: 30px;
+    }
+
+    h2 {
+      color: #2c3e50;
+      margin-bottom: 25px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 22px;
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .input-group i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6b8cbc;
+      font-size: 16px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 14px 14px 14px 45px;
+      border: 1px solid #e1e5eb;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: all 0.3s;
+      background-color: #f9fbfd;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #4a6fa5;
+      box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.1);
+      background-color: #fff;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(to right, #4a6fa5, #6b8cbc);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: linear-gradient(to right, #3a5a8a, #5a7caa);
+      box-shadow: 0 5px 15px rgba(74, 111, 165, 0.3);
+    }
+
+    .toggle {
+      text-align: center;
+      margin-top: 20px;
+      color: #4a6fa5;
+      cursor: pointer;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+
+    .toggle:hover {
+      color: #3a5a8a;
+      text-decoration: underline;
+    }
+
+    #roleField {
+      display: none;
+      margin-bottom: 20px;
+    }
+
+    #message {
+      text-align: center;
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 15px;
+      font-size: 12px;
+      color: #7b8a8b;
+      border-top: 1px solid #eaecee;
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        max-width: 100%;
+      }
+      
+      .form-container {
+        padding: 20px;
+      }
     }
   </style>
 </head>
-<body class="bg-light">
-<div class="container py-5">
-  <h2 class="mb-4">Admin - Manage Products</h2>
-  <a href="Shop.html">Seller View</a>
-
-  <div class="mb-3">
-    <input type="text" class="form-control" id="searchInput" placeholder="Search by product name...">
-  </div>
-
-  <div class="mb-4 p-3 bg-white rounded shadow-sm d-flex justify-content-between">
-    <h5>Total Sales: Ksh <span id="totalSales">0</span></h5>
-    <h5>Total Stock: <span id="totalStock">0</span> items</h5>
-  </div>
-
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <h5 class="card-title">Today's Sales</h5>
-      <div class="d-flex align-items-center">
-        <strong id="adminSalesTotal" class="me-2 d-none">Ksh 0.00</strong>
-        <div id="adminSalesSpinner" class="spinner-border spinner-border-sm text-primary" role="status"></div>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">
+        <i class="fas fa-boxes"></i>
+        <h1>Shop Inventory</h1>
       </div>
+      <p>Professional Inventory Management System</p>
+    </div>
+    
+    <div class="form-container">
+      <h2 id="form-title">Login to Your Account</h2>
+      
+      <div class="input-group">
+        <i class="fas fa-envelope"></i>
+        <input type="email" id="email" placeholder="Email Address" required>
+      </div>
+      
+      <div class="input-group">
+        <i class="fas fa-lock"></i>
+        <input type="password" id="password" placeholder="Password" required>
+      </div>
+      
+      <!-- Role select only visible on signup -->
+      <div id="roleField" class="input-group">
+        <i class="fas fa-user-tag"></i>
+        <select id="role">
+          <option value="admin">Admin</option>
+          <option value="seller">Seller</option>
+        </select>
+      </div>
+
+      <button onclick="login()">Login</button>
+      <p class="toggle" onclick="toggleForm()">Don't have an account? Sign Up</p>
+      <div id="message"></div>
+    </div>
+    
+    <div class="footer">
+      <p>© 2023 Shop Inventory System. All rights reserved.</p>
     </div>
   </div>
 
-  <button class="btn btn-success mb-3" id="btnShowAddForm">Add New Product</button>
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCvaeT-85wmY2D2pfja1l0QC9hZHXVAEb0",
+      authDomain: "shop-2a9f2.firebaseapp.com",
+      projectId: "shop-2a9f2",
+      storageBucket: "shop-2a9f2.appspot.com",
+      messagingSenderId: "764656202494",
+      appId: "1:764656202494:web:2453fe5a652f89b656ebaf"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-  <div id="productFormContainer" class="mb-4" style="display:none;">
-    <h4 id="formTitle">Add New Product</h4>
-    <form id="productForm">
-      <input type="hidden" id="productId" />
-      <div class="mb-3">
-        <label for="productName" class="form-label">Product Name</label>
-        <input type="text" id="productName" class="form-control" required />
-      </div>
-      <div class="mb-3">
-        <label for="bulkQuantity" class="form-label">Bulk Quantity</label>
-        <input type="number" id="bulkQuantity" class="form-control" min="0" step="any" required />
-      </div>
-      <div class="mb-3">
-        <label for="bulkUnit" class="form-label">Bulk Unit</label>
-        <input type="text" id="bulkUnit" class="form-control" placeholder="e.g. kg, liters" required />
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Fractions</label>
-        <div id="fractionsContainer"></div>
-        <button type="button" class="btn btn-secondary btn-sm" id="addFractionBtn">Add Fraction</button>
-      </div>
-      <button type="submit" class="btn btn-primary">Save Product</button>
-      <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
-    </form>
-  </div>
+    let isLogin = true;
 
-  <table class="table table-bordered bg-white">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Bulk Quantity</th>
-        <th>Bulk Unit</th>
-        <th>Fractions</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="productTableBody"></tbody>
-  </table>
-</div>
+    function toggleForm() {
+      const title = document.getElementById("form-title");
+      const btn = document.querySelector("button");
+      const toggle = document.querySelector(".toggle");
+      const roleField = document.getElementById("roleField");
 
-<div class="toast-container">
-  <div id="toastMessage" class="toast align-items-center text-bg-success border-0" role="alert">
-    <div class="d-flex">
-      <div class="toast-body"></div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-    </div>
-  </div>
-</div>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
-  import {
-    getFirestore, collection, query, where, onSnapshot, Timestamp,
-    doc, getDoc, updateDoc, deleteDoc, addDoc
-  } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyCvaeT-85wmY2D2pfja1l0QC9hZHXVAEb0",
-    authDomain: "shop-2a9f2.firebaseapp.com",
-    projectId: "shop-2a9f2",
-    storageBucket: "shop-2a9f2.appspot.com",
-    messagingSenderId: "764656202494",
-    appId: "1:764656202494:web:2453fe5a652f89b656ebaf"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  const searchInput = document.getElementById('searchInput');
-  const productTableBody = document.getElementById('productTableBody');
-  const productFormContainer = document.getElementById('productFormContainer');
-  const productForm = document.getElementById('productForm');
-  const btnShowAddForm = document.getElementById('btnShowAddForm');
-  const cancelBtn = document.getElementById('cancelBtn');
-  const fractionsContainer = document.getElementById('fractionsContainer');
-  const toastElement = document.getElementById('toastMessage');
-  const toast = new bootstrap.Toast(toastElement);
-  const toastBody = toastElement.querySelector('.toast-body');
-  const formTitle = document.getElementById('formTitle');
-
-  let allProducts = [];
-
-  function showToast(msg, isError = false) {
-    toastElement.classList.remove('text-bg-success', 'text-bg-danger');
-    toastElement.classList.add(isError ? 'text-bg-danger' : 'text-bg-success');
-    toastBody.textContent = msg;
-    toast.show();
-  }
-
-  btnShowAddForm.addEventListener('click', () => {
-    resetForm();
-    formTitle.textContent = 'Add New Product';
-    productFormContainer.style.display = 'block';
-  });
-
-  cancelBtn.addEventListener('click', () => {
-    productFormContainer.style.display = 'none';
-  });
-
-  document.getElementById('addFractionBtn').addEventListener('click', () => {
-    addFractionInput();
-  });
-
-  function addFractionInput(frac = {}) {
-    const div = document.createElement('div');
-    div.classList.add('fraction-row', 'd-flex', 'gap-2', 'align-items-center');
-    div.innerHTML = `
-      <input type="number" class="form-control fraction-quantity" placeholder="Quantity" min="0" step="any" required value="${frac.quantity || ''}" style="width:100px" />
-      <input type="text" class="form-control fraction-unit" placeholder="Unit" required value="${frac.unit || ''}" style="width:100px" />
-      <input type="number" class="form-control fraction-price" placeholder="Price (Ksh)" min="0" step="any" required value="${frac.price || ''}" style="width:120px" />
-      <input type="number" class="form-control fraction-stock" placeholder="Stock" min="0" step="1" required value="${frac.stock || 0}" style="width:100px" />
-      <button type="button" class="btn btn-danger btn-sm remove-fraction-btn">Remove</button>
-    `;
-    div.querySelector('.remove-fraction-btn').addEventListener('click', () => div.remove());
-    fractionsContainer.appendChild(div);
-  }
-
-  function resetForm() {
-    productForm.reset();
-    document.getElementById('productId').value = '';
-    fractionsContainer.innerHTML = '';
-    addFractionInput();
-  }
-
-  function renderProducts(products) {
-    productTableBody.innerHTML = '';
-    let totalSales = 0;
-    let totalStock = 0;
-
-    products.forEach(({ id, data }) => {
-      data.fractions.forEach(frac => {
-        totalSales += (frac.price || 0) * (frac.stock || 0);
-        totalStock += frac.stock || 0;
-      });
-
-      const fractionsHtml = data.fractions.map(frac =>
-        `${frac.quantity}${frac.unit} - Ksh ${frac.price.toFixed(2)} - Stock: ${frac.stock}`
-      ).join('<br>');
-
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${data.name}</td>
-        <td>${data.bulkQuantity}</td>
-        <td>${data.bulkUnit}</td>
-        <td>${fractionsHtml}</td>
-        <td>
-          <button class="btn btn-sm btn-primary edit-btn" data-id="${id}">Edit</button>
-          <button class="btn btn-sm btn-danger delete-btn" data-id="${id}">Delete</button>
-        </td>
-      `;
-      productTableBody.appendChild(row);
-    });
-
-    document.getElementById('totalSales').textContent = totalSales.toFixed(2);
-    document.getElementById('totalStock').textContent = totalStock;
-
-    document.querySelectorAll('.edit-btn').forEach(btn =>
-      btn.addEventListener('click', () => editProduct(btn.dataset.id))
-    );
-    document.querySelectorAll('.delete-btn').forEach(btn =>
-      btn.addEventListener('click', () => deleteProduct(btn.dataset.id))
-    );
-  }
-
-  searchInput.addEventListener('input', () => {
-    const keyword = searchInput.value.toLowerCase();
-    const filtered = allProducts.filter(p =>
-      p.data.name.toLowerCase().includes(keyword)
-    );
-    renderProducts(filtered);
-  });
-
-  onSnapshot(collection(db, 'products'), (snapshot) => {
-    allProducts = snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() }));
-    renderProducts(allProducts);
-  });
-
-  async function editProduct(id) {
-    const docRef = doc(db, 'products', id);
-    const docSnap = await getDoc(docRef);
-    if (!docSnap.exists()) return showToast('Product not found', true);
-
-    const data = docSnap.data();
-    document.getElementById('productId').value = id;
-    document.getElementById('productName').value = data.name;
-    document.getElementById('bulkQuantity').value = data.bulkQuantity;
-    document.getElementById('bulkUnit').value = data.bulkUnit;
-    fractionsContainer.innerHTML = '';
-    data.fractions.forEach(frac => addFractionInput(frac));
-    formTitle.textContent = 'Edit Product';
-    productFormContainer.style.display = 'block';
-  }
-
-  async function deleteProduct(id) {
-    if (!confirm('Are you sure you want to delete this product?')) return;
-    await deleteDoc(doc(db, 'products', id));
-    showToast('Product deleted');
-  }
-
-  productForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const id = document.getElementById('productId').value;
-    const name = document.getElementById('productName').value.trim();
-    const bulkQuantity = parseFloat(document.getElementById('bulkQuantity').value);
-    const bulkUnit = document.getElementById('bulkUnit').value.trim();
-
-    const fractions = Array.from(fractionsContainer.children).map(row => ({
-      quantity: parseFloat(row.querySelector('.fraction-quantity').value),
-      unit: row.querySelector('.fraction-unit').value.trim(),
-      price: parseFloat(row.querySelector('.fraction-price').value),
-      stock: parseInt(row.querySelector('.fraction-stock').value)
-    }));
-
-    const data = { name, bulkQuantity, bulkUnit, fractions };
-
-    try {
-      if (id) {
-        await updateDoc(doc(db, 'products', id), data);
-        showToast('Product updated successfully');
+      if (isLogin) {
+        title.textContent = "Create New Account";
+        btn.textContent = "Sign Up";
+        toggle.textContent = "Already have an account? Login";
+        btn.setAttribute("onclick", "signup()");
+        roleField.style.display = "block";
+        isLogin = false;
       } else {
-        await addDoc(collection(db, 'products'), data);
-        showToast('Product added successfully');
+        title.textContent = "Login to Your Account";
+        btn.textContent = "Login";
+        toggle.textContent = "Don't have an account? Sign Up";
+        btn.setAttribute("onclick", "login()");
+        roleField.style.display = "none";
+        isLogin = true;
       }
-      resetForm();
-      productFormContainer.style.display = 'none';
-    } catch (error) {
-      showToast('Error saving product: ' + error.message, true);
+      document.getElementById("message").style.display = "none";
     }
-  });
 
-  function getStartOfToday() {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    return Timestamp.fromDate(now);
-  }
+    function signup() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const role = document.getElementById("role").value;
+      const messageDiv = document.getElementById("message");
 
-  function fetchTodaySalesTotal() {
-    const salesTotal = document.getElementById("adminSalesTotal");
-    const spinner = document.getElementById("adminSalesSpinner");
-    const today = getStartOfToday();
+      // Basic validation
+      if (!email || !password) {
+        showMessage("Please fill in all fields", "error");
+        return;
+      }
 
-    spinner.style.display = "block";
-    const salesQuery = query(collection(db, 'sales'), where("timestamp", ">=", today));
+      auth.createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          const uid = userCredential.user.uid;
+          // Save role in Firestore
+          return db.collection("users").doc(uid).set({
+            email: email,
+            role: role,
+            createdAt: new Date()
+          });
+        })
+        .then(() => {
+          showMessage("Account created successfully! Redirecting...", "success");
+          setTimeout(() => {
+            redirectUser(auth.currentUser.uid);
+          }, 1500);
+        })
+        .catch(error => {
+          showMessage(error.message, "error");
+        });
+    }
 
-    onSnapshot(salesQuery, (snapshot) => {
-      let total = 0;
-      snapshot.forEach(doc => {
-        const sale = doc.data();
-        if (sale.price) total += sale.price;
+    function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const messageDiv = document.getElementById("message");
+
+      // Basic validation
+      if (!email || !password) {
+        showMessage("Please fill in all fields", "error");
+        return;
+      }
+
+      auth.signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          showMessage("Login successful! Redirecting...", "success");
+          setTimeout(() => {
+            redirectUser(userCredential.user.uid);
+          }, 1500);
+        })
+        .catch(error => {
+          showMessage(error.message, "error");
+        });
+    }
+
+    function redirectUser(uid) {
+      db.collection("users").doc(uid).get().then(doc => {
+        if (doc.exists) {
+          const role = doc.data().role;
+          if (role === "admin") {
+            window.location.href = "shop.html";
+          } else {
+            window.location.href = "shop2.html";
+          }
+        } else {
+          showMessage("No role assigned to this account!", "error");
+        }
       });
+    }
 
-      salesTotal.textContent = `Ksh ${total.toFixed(2)}`;
-      salesTotal.classList.remove("d-none");
-      spinner.style.display = "none";
-    }, (error) => {
-      console.error("Failed to fetch sales:", error);
-      spinner.innerHTML = "<div class='text-danger'>Failed to load</div>";
-    });
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    fetchTodaySalesTotal();
-  });
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    function showMessage(text, type) {
+      const messageDiv = document.getElementById("message");
+      messageDiv.textContent = text;
+      messageDiv.className = type;
+      messageDiv.style.display = "block";
+    }
+  </script>
 </body>
-      </html>
+        </html>
