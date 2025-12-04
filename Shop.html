@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Seller Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    :root {
+      --primary: #4361ee;
+      --success: #4cc9f0;
+      --warning: #f72585;
+    }
+    body { background: #f5f7fb; font-family: 'Segoe UI', sans-serif; }
+    .card { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: .2s; }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
+    .stat-card { border-left: 5px solid var(--primary); }
+    .product-image { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; }
+    .fraction-item { padding: 8px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+    .fraction-item:last-child { border-bottom: none; }
+    .badge-low { background: #ffc107; color: black; }
+    .badge-out { background: #dc3545; color: white; }
+    .btn-sell { background: var(--warning); color: white; }
+    .btn-restock { background: var(--primary); color: white; }
+    .sidebar { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); position: sticky; top: 20px; }
+    .sidebar .nav-link { border-radius: 8px; padding: 10px 15px; color: #555; }
+    .sidebar .nav-link.active, .sidebar .nav-link:hover { background: #f0f2ff; color: var(--primary); }
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 2000; }
+  </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand fw-semibold" href="#"><i class="fas fa-store me-2"></i>Seller Dashboard</a>
+  </div>
+</nav>
+
+<div class="container py-4">
+  <div class="row">
+
+    <!-- SIDEBAR -->
+    <div class="col-lg-3 mb-4">
+      <div class="sidebar p-3">
+        <ul class="nav flex-column">
+          <li><a class="nav-link active" href="#"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+          <li><a class="nav-link" href="#"><i class="fas fa-box"></i> Products</a></li>
+          <li><a class="nav-link" href="#"><i class="fas fa-shopping-cart"></i> Orders</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="col-lg-9">
+
+      <h2 class="mb-4">Dashboard Overview</h2>
+
+      <!-- STATS -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="card stat-card h-100"><div class="card-body">
+            <p class="text-muted small mb-1">Today's Sales</p>
+            <h4 id="todaySalesTotal">Ksh 0.00</h4>
+          </div></div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="card stat-card h-100"><div class="card-body">
+            <p class="text-muted small mb-1">Total Products</p>
+            <h4 id="totalProducts">0</h4>
+          </div></div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="card stat-card h-100"><div class="card-body">
+            <p class="text-muted small mb-1">Low Stock</p>
+            <h4 id="lowStockCount">0</h4>
+          </div></div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="card stat-card h-100"><div class="card-body">
+            <p class="text-muted small mb-1">Orders Today</p>
+            <h4 id="totalOrders">0</h4>
+          </div></div>
+        </div>
+      </div>
+
+      <!-- PRODUCTS TABLE -->
+      <div class="card">
+        <div class="card-header bg-white">
+          <h5 class="mb-1">Product Management</h5>
+        </div>
+
+        <div class="card-body">
+          <table class="table table-hover align-middle" id="productsTable">
+            <thead class="table-light">
+              <tr>
+                <th>Product</th>
+                <th>Fractions</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+
+          <small id="tableInfo" class="text-muted">Loading...</small>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script type="module">
+
+/* ---------------- FIREBASE ------------------- */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
+import { getFirestore, collection, onSnapshot, doc, getDoc, updateDoc, addDoc,
+         query, where, Timestamp, serverTimestamp } 
+from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyCvaeT-85wmY2D2pfja1l0QC9hZHXVAEb0",
+  authDomain: "shop-2a9f2.firebaseapp.com",
+  projectId: "shop-2a9f2",
+  storageBucket: "shop-2a9f2.appspot.com",
+  messagingSenderId: "764656202494",
+  appId: "1:764656202494:web:2453fe5a652f89b656ebaf"
+});
+const db = getFirestore(app);
+
+/* ---------------- ELEMENTS ------------------- */
+const els = {
+  tbody: document.querySelector("#productsTable tbody"),
+  todaySales: document.getElementById("todaySalesTotal"),
+  totalProducts: document.getElementById("totalProducts"),
+  lowStock: document.getElementById("lowStockCount"),
+  totalOrders: document.getElementById("totalOrders"),
+  info: document.getElementById("tableInfo"),
+};
+
+const toastContainer = document.querySelector(".toast-container");
+
+/* ----------- TOAST FUNCTION (FIXED) ---------------- */
+function toast(msg, error = false) {
+  const id = "t" + Date.now();
+  toastContainer.insertAdjacentHTML(
+    "beforeend",
+    `
+    <div id="${id}" class="toast text-white ${error ? "bg-danger" : "bg-success"}" role="alert">
+      <div class="d-flex">
+        <div class="toast-body">${msg}</div>
+        <button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>`
+  );
+
+  const t = new bootstrap.Toast(document.getElementById(id), { delay: 3000 });
+  t.show();
+  setTimeout(() => document.getElementById(id)?.remove(), 3500);
+}
+
+/* -------------- SELL ---------------- */
+async function sell(id, idx) {
+  const ref = doc(db, "products", id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+  const f = data.fractions[idx];
+
+  if (f.stock <= 0) return toast("Out of stock!", true);
+
+  f.stock--;
+
+  await updateDoc(ref, { fractions: data.fractions });
+  await addDoc(collection(db, "sales"), {
+    productId: id,
+    fractionIndex: idx,
+    price: f.price,
+    timestamp: serverTimestamp(),
+  });
+
+  toast(`Sold ${f.quantity} ${f.unit}`);
+}
+
+/* -------------- RESTOCK ---------------- */
+async function restock(id, idx) {
+  const ref = doc(db, "products", id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+  const f = data.fractions[idx];
+
+  const amt = prompt(`Restock ${f.quantity} ${f.unit}:`, "10");
+  if (!amt || isNaN(amt) || +amt <= 0) return;
+
+  f.stock += +amt;
+
+  await updateDoc(ref, { fractions: data.fractions });
+  toast(`Restocked ${amt} units`);
+}
+
+/* -------------- RENDER PRODUCTS ---------------- */
+function renderProducts() {
+  onSnapshot(collection(db, "products"), snap => {
+    els.tbody.innerHTML = "";
+
+    let visible = 0;
+    let low = 0;
+
+    snap.forEach(docu => {
+      const p = docu.data();
+      const id = docu.id;
+
+      const hasLow = p.fractions.some(f => f.stock < 5 && f.stock > 0);
+      const hasOut = p.fractions.some(f => f.stock <= 0);
+
+      if (hasLow || hasOut) low++;
+
+      let fractionsHTML = "";
+      let actionHTML = "";
+
+      p.fractions.forEach((f, i) => {
+        fractionsHTML += `
+          <div class="fraction-item">
+            <div>
+              <strong>${f.quantity} ${f.unit}</strong>
+              <div class="small text-muted">Ksh ${f.price}</div>
+            </div>
+            <span class="badge ${f.stock <= 0 ? "badge-out" : f.stock < 5 ? "badge-low" : "bg-success"}">
+              ${f.stock <= 0 ? "Out" : `Stock: ${f.stock}`}
+            </span>
+          </div>
+        `;
+
+        actionHTML += `
+          <button class="btn btn-sm btn-sell sell-btn" data-id="${id}" data-idx="${i}">Sell</button>
+          <button class="btn btn-sm btn-restock restock-btn" data-id="${id}" data-idx="${i}">Restock</button><br>
+        `;
+      });
+
+      els.tbody.insertAdjacentHTML(
+        "beforeend",
+        `
+        <tr>
+          <td><strong>${p.name}</strong><br><small class="text-muted">${p.category || ""}</small></td>
+          <td>${fractionsHTML}</td>
+          <td>${hasOut ? '<span class="badge badge-out">Out</span>' : hasLow ? '<span class="badge badge-low">Low</span>' : '<span class="badge bg-success">In Stock</span>'}</td>
+          <td>${actionHTML}</td>
+        </tr>
+      `
+      );
+
+      visible++;
+    });
+
+    els.totalProducts.textContent = snap.size;
+    els.lowStock.textContent = low;
+    els.info.textContent = `Showing ${visible} of ${snap.size} products`;
+  });
+}
+
+/* ------ TODAY'S SALES ----------- */
+function todayStart() {
+  const d = new Date();
+  return Timestamp.fromDate(new Date(d.getFullYear(), d.getMonth(), d.getDate()));
+}
+
+onSnapshot(
+  query(collection(db, "sales"), where("timestamp", ">=", todayStart())),
+  snap => {
+    let total = 0;
+    snap.forEach(s => (total += s.data().price));
+    els.todaySales.textContent = `Ksh ${total.toFixed(2)}`;
+    els.totalOrders.textContent = snap.size;
+  }
+);
+
+/* EVENTS */
+document.addEventListener("click", e => {
+  if (e.target.classList.contains("sell-btn"))
+    sell(e.target.dataset.id, e.target.dataset.idx);
+
+  if (e.target.classList.contains("restock-btn"))
+    restock(e.target.dataset.id, e.target.dataset.idx);
+});
+
+/* INIT */
+renderProducts();
+setTimeout(() => toast("Welcome back!"), 800);
+
+</script>
+</body>
+</html>

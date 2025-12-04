@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #4361ee;
+      --secondary: #3a0ca3;
+      --success: #4cc9f0;
+      --warning: #f72585;
+      --info: #7209b7;
+      --light-bg: #f8f9fa;
+    }
+    
+    body { 
+      background: #f5f7fb; 
+      font-family: 'Segoe UI', sans-serif; 
+    }
+    
+    .card { 
+      border: none; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+      transition: .2s; 
+      margin-bottom: 1.5rem;
+    }
+    
+    .card:hover { 
+      transform: translateY(-4px); 
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12); 
+    }
+    
+    .stat-card { 
+      border-left: 5px solid var(--primary); 
+      height: 100%;
+    }
+    
+    .stat-card.revenue { border-left-color: var(--success); }
+    .stat-card.orders { border-left-color: var(--info); }
+    .stat-card.products { border-left-color: var(--primary); }
+    .stat-card.customers { border-left-color: var(--warning); }
+    
+    .sidebar { 
+      background: white; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+      position: sticky; 
+      top: 20px; 
+      height: calc(100vh - 40px);
+      overflow-y: auto;
+    }
+    
+    .sidebar .nav-link { 
+      border-radius: 8px; 
+      padding: 12px 15px; 
+      color: #555; 
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    
+    .sidebar .nav-link.active, 
+    .sidebar .nav-link:hover { 
+      background: linear-gradient(45deg, var(--primary), #3a0ca3); 
+      color: white; 
+    }
+    
+    .sidebar .nav-link i { 
+      width: 20px; 
+      text-align: center; 
+      margin-right: 10px; 
+    }
+    
+    .navbar {
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .product-image { 
+      width: 50px; 
+      height: 50px; 
+      object-fit: cover; 
+      border-radius: 8px; 
+    }
+    
+    .badge-low { background: #ffc107; color: black; }
+    .badge-out { background: #dc3545; color: white; }
+    
+    .btn-primary { background: var(--primary); border: none; }
+    .btn-success { background: var(--success); border: none; }
+    .btn-warning { background: var(--warning); border: none; }
+    .btn-info { background: var(--info); border: none; }
+    
+    .table-hover tbody tr:hover {
+      background-color: rgba(67, 97, 238, 0.05);
+    }
+    
+    .modal-content {
+      border-radius: 12px;
+      border: none;
+    }
+    
+    .fraction-item { 
+      padding: 8px 0; 
+      border-bottom: 1px solid #eee; 
+      display: flex; 
+      justify-content: space-between; 
+    }
+    
+    .fraction-item:last-child { border-bottom: none; }
+    
+    .chart-container {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    
+    .toast-container { 
+      position: fixed; 
+      top: 20px; 
+      right: 20px; 
+      z-index: 2000; 
+    }
+    
+    .search-box {
+      position: relative;
+    }
+    
+    .search-box input {
+      padding-left: 40px;
+      border-radius: 25px;
+      border: 1px solid #dee2e6;
+    }
+    
+    .search-box i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6c757d;
+    }
+    
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    
+    .page-title {
+      color: var(--secondary);
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+    
+    .action-buttons .btn {
+      margin-right: 5px;
+      margin-bottom: 5px;
+    }
+    
+    .stats-icon {
+      font-size: 2rem;
+      color: var(--primary);
+      opacity: 0.8;
+    }
+    
+    .stat-card.revenue .stats-icon { color: var(--success); }
+    .stat-card.orders .stats-icon { color: var(--info); }
+    .stat-card.customers .stats-icon { color: var(--warning); }
+  </style>
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="#">
+        <i class="fas fa-chart-line me-2"></i>Admin Dashboard
+      </a>
+      
+      <div class="d-flex align-items-center">
+        <div class="search-box me-3">
+          <i class="fas fa-search"></i>
+          <input type="text" class="form-control" placeholder="Search..." id="searchInput">
+        </div>
+        
+        <div class="dropdown">
+          <button class="btn btn-light rounded-circle p-0" type="button" data-bs-toggle="dropdown">
+            <div class="user-avatar">A</div>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Settings</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid py-4">
+    <div class="row">
+      <!-- Sidebar -->
+      <div class="col-lg-3 col-xl-2">
+        <div class="sidebar p-3">
+          <div class="text-center mb-4">
+            <h5 class="fw-bold text-primary">Admin Panel</h5>
+            <p class="text-muted small">Welcome, Administrator</p>
+          </div>
+          
+          <ul class="nav flex-column">
+            <li><a class="nav-link active" href="#dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+            <li><a class="nav-link" href="#products"><i class="fas fa-box"></i> Products</a></li>
+            <li><a class="nav-link" href="#orders"><i class="fas fa-shopping-cart"></i> Orders</a></li>
+            <li><a class="nav-link" href="#customers"><i class="fas fa-users"></i> Customers</a></li>
+            <li><a class="nav-link" href="#analytics"><i class="fas fa-chart-bar"></i> Analytics</a></li>
+            <li><a class="nav-link" href="#settings"><i class="fas fa-cog"></i> Settings</a></li>
+          </ul>
+          
+          <div class="mt-5 p-3 bg-light rounded">
+            <small class="text-muted">Quick Actions</small>
+            <button class="btn btn-primary btn-sm w-100 mt-2" id="addProductBtn">
+              <i class="fas fa-plus me-1"></i> Add Product
+            </button>
+            <button class="btn btn-success btn-sm w-100 mt-2" id="exportDataBtn">
+              <i class="fas fa-file-export me-1"></i> Export Data
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="col-lg-9 col-xl-10">
+        <!-- Page Title -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2 class="page-title">Dashboard Overview</h2>
+          <div class="text-muted">
+            <i class="fas fa-calendar me-1"></i>
+            <span id="currentDate"></span>
+          </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row g-4 mb-4">
+          <div class="col-md-6 col-lg-3">
+            <div class="card stat-card revenue">
+              <div class="card-body">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <p class="text-muted small mb-1">Total Revenue</p>
+                    <h3 id="totalRevenue">Ksh 0.00</h3>
+                    <small class="text-success"><i class="fas fa-arrow-up me-1"></i> 12% from last month</small>
+                  </div>
+                  <div class="stats-icon">
+                    <i class="fas fa-money-bill-wave"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 col-lg-3">
+            <div class="card stat-card orders">
+              <div class="card-body">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <p class="text-muted small mb-1">Total Orders</p>
+                    <h3 id="totalOrders">0</h3>
+                    <small class="text-success"><i class="fas fa-arrow-up me-1"></i> 8% from last month</small>
+                  </div>
+                  <div class="stats-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 col-lg-3">
+            <div class="card stat-card products">
+              <div class="card-body">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <p class="text-muted small mb-1">Total Products</p>
+                    <h3 id="totalProducts">0</h3>
+                    <small class="text-info"><i class="fas fa-box me-1"></i> <span id="lowStockCount">0</span> low stock</small>
+                  </div>
+                  <div class="stats-icon">
+                    <i class="fas fa-box-open"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 col-lg-3">
+            <div class="card stat-card customers">
+              <div class="card-body">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <p class="text-muted small mb-1">Total Customers</p>
+                    <h3 id="totalCustomers">0</h3>
+                    <small class="text-success"><i class="fas fa-arrow-up me-1"></i> 5% from last month</small>
+                  </div>
+                  <div class="stats-icon">
+                    <i class="fas fa-users"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts and Recent Orders -->
+        <div class="row g-4">
+          <!-- Products Table -->
+          <div class="col-lg-8">
+            <div class="card">
+              <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Product Management</h5>
+                <button class="btn btn-primary btn-sm" id="addProductBtnMain">
+                  <i class="fas fa-plus me-1"></i> Add New
+                </button>
+              </div>
+              
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle" id="productsTable">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Fractions</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+                <small id="tableInfo" class="text-muted">Loading products...</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Orders & Quick Stats -->
+          <div class="col-lg-4">
+            <div class="card">
+              <div class="card-header bg-white">
+                <h5 class="mb-0">Recent Orders</h5>
+              </div>
+              <div class="card-body">
+                <div id="recentOrders" class="mb-3">
+                  <!-- Orders will be loaded here -->
+                  <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card mt-4">
+              <div class="card-header bg-white">
+                <h5 class="mb-0">Quick Stats</h5>
+              </div>
+              <div class="card-body">
+                <div class="fraction-item">
+                  <span>Today's Sales</span>
+                  <strong id="todaySalesTotal">Ksh 0.00</strong>
+                </div>
+                <div class="fraction-item">
+                  <span>Orders Today</span>
+                  <strong id="ordersToday">0</strong>
+                </div>
+                <div class="fraction-item">
+                  <span>Low Stock Items</span>
+                  <strong class="text-warning" id="lowStockItems">0</strong>
+                </div>
+                <div class="fraction-item">
+                  <span>Out of Stock</span>
+                  <strong class="text-danger" id="outOfStockItems">0</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container"></div>
+
+  <!-- Add Product Modal -->
+  <div class="modal fade" id="addProductModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add New Product</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="addProductForm">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Product Name</label>
+                <input type="text" class="form-control" id="productName" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Category</label>
+                <select class="form-select" id="productCategory" required>
+                  <option value="">Select Category</option>
+                  <option value="food">Food</option>
+                  <option value="beverages">Beverages</option>
+                  <option value="snacks">Snacks</option>
+                  <option value="household">Household</option>
+                  <option value="personal-care">Personal Care</option>
+                  <option value="electronics">Electronics</option>
+                  <option value="clothing">Clothing</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Description</label>
+              <textarea class="form-control" id="productDescription" rows="2"></textarea>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Product Fractions</label>
+              <div id="fractionsContainer">
+                <div class="fraction-item border p-3 rounded mb-2">
+                  <div class="row g-2">
+                    <div class="col-4">
+                      <input type="number" class="form-control fraction-quantity" placeholder="Quantity" required min="0" step="0.01">
+                    </div>
+                    <div class="col-4">
+                      <select class="form-select fraction-unit" required>
+                        <option value="">Unit</option>
+                        <option value="kg">kg</option>
+                        <option value="g">g</option>
+                        <option value="L">L</option>
+                        <option value="ml">ml</option>
+                        <option value="pcs">pcs</option>
+                        <option value="pack">pack</option>
+                        <option value="bottle">bottle</option>
+                        <option value="box">box</option>
+                      </select>
+                    </div>
+                    <div class="col-4">
+                      <input type="number" class="form-control fraction-price" placeholder="Price" required min="0" step="0.01">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="addFractionBtn">
+                <i class="fas fa-plus me-1"></i> Add Fraction
+              </button>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Initial Stock (per fraction)</label>
+              <input type="number" class="form-control" id="initialStock" value="10" required min="0">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="saveProductBtn">Add Product</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- GLOBAL FUNCTIONS (for HTML onclick attributes) -->
+  <script>
+    // These functions will be called from HTML onclick attributes
+    // They forward the call to the module's functions
+    window.addFraction = function() {
+      const container = document.getElementById('fractionsContainer');
+      const newFraction = document.createElement('div');
+      newFraction.className = 'fraction-item border p-3 rounded mb-2';
+      newFraction.innerHTML = `
+        <div class="row g-2">
+          <div class="col-4">
+            <input type="number" class="form-control fraction-quantity" placeholder="Quantity" required min="0" step="0.01">
+          </div>
+          <div class="col-4">
+            <select class="form-select fraction-unit" required>
+              <option value="">Unit</option>
+              <option value="kg">kg</option>
+              <option value="g">g</option>
+              <option value="L">L</option>
+              <option value="ml">ml</option>
+              <option value="pcs">pcs</option>
+              <option value="pack">pack</option>
+              <option value="bottle">bottle</option>
+              <option value="box">box</option>
+            </select>
+          </div>
+          <div class="col-4">
+            <input type="number" class="form-control fraction-price" placeholder="Price" required min="0" step="0.01">
+          </div>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="this.parentElement.remove()">
+          <i class="fas fa-trash me-1"></i> Remove
+        </button>
+      `;
+      container.appendChild(newFraction);
+    };
+
+    window.addEditFraction = function() {
+      const container = document.getElementById('editFractionsContainer');
+      const newFraction = document.createElement('div');
+      newFraction.className = 'fraction-item border p-3 rounded mb-2';
+      newFraction.innerHTML = `
+        <div class="row g-2">
+          <div class="col-3">
+            <input type="number" class="form-control" placeholder="Quantity" required min="0" step="0.01">
+          </div>
+          <div class="col-3">
+            <select class="form-select" required>
+              <option value="">Unit</option>
+              <option value="kg">kg</option>
+              <option value="g">g</option>
+              <option value="L">L</option>
+              <option value="ml">ml</option>
+              <option value="pcs">pcs</option>
+              <option value="pack">pack</option>
+              <option value="bottle">bottle</option>
+              <option value="box">box</option>
+            </select>
+          </div>
+          <div class="col-3">
+            <input type="number" class="form-control" placeholder="Price" required min="0" step="0.01">
+          </div>
+          <div class="col-3">
+            <input type="number" class="form-control" placeholder="Stock" required min="0">
+          </div>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="this.parentElement.remove()">
+          <i class="fas fa-trash me-1"></i> Remove
+        </button>
+      `;
+      container.appendChild(newFraction);
+    };
+  </script>
+
+  <script type="module">
+    /* ---------------- FIREBASE ------------------- */
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
+    import { 
+      getFirestore, collection, onSnapshot, doc, getDoc, updateDoc, addDoc,
+      query, where, Timestamp, serverTimestamp, getDocs, deleteDoc
+    } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCvaeT-85wmY2D2pfja1l0QC9hZHXVAEb0",
+      authDomain: "shop-2a9f2.firebaseapp.com",
+      projectId: "shop-2a9f2",
+      storageBucket: "shop-2a9f2.appspot.com",
+      messagingSenderId: "764656202494",
+      appId: "1:764656202494:web:2453fe5a652f89b656ebaf"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    /* ---------------- GLOBAL VARIABLES ------------------- */
+    let currentProductId = null;
+
+    /* ---------------- ELEMENTS ------------------- */
+    const els = {
+      tbody: document.querySelector("#productsTable tbody"),
+      totalRevenue: document.getElementById("totalRevenue"),
+      totalProducts: document.getElementById("totalProducts"),
+      totalOrders: document.getElementById("totalOrders"),
+      totalCustomers: document.getElementById("totalCustomers"),
+      lowStockCount: document.getElementById("lowStockCount"),
+      todaySalesTotal: document.getElementById("todaySalesTotal"),
+      ordersToday: document.getElementById("ordersToday"),
+      lowStockItems: document.getElementById("lowStockItems"),
+      outOfStockItems: document.getElementById("outOfStockItems"),
+      info: document.getElementById("tableInfo"),
+      recentOrders: document.getElementById("recentOrders"),
+      currentDate: document.getElementById("currentDate"),
+      addProductBtn: document.getElementById("addProductBtn"),
+      addProductBtnMain: document.getElementById("addProductBtnMain"),
+      saveProductBtn: document.getElementById("saveProductBtn"),
+      exportDataBtn: document.getElementById("exportDataBtn")
+    };
+
+    const toastContainer = document.querySelector(".toast-container");
+
+    /* ----------- EXPOSE FUNCTIONS TO WINDOW OBJECT ----------- */
+    window.editProduct = editProduct;
+    window.deleteProduct = deleteProduct;
+    window.saveProduct = saveProduct;
+    window.sell = sell;
+    window.restock = restock;
+
+    /* ----------- INITIALIZE DATE ----------- */
+    function initializeDate() {
+      const now = new Date();
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      els.currentDate.textContent = now.toLocaleDateString('en-US', options);
+    }
+
+    /* ----------- TOAST FUNCTION ----------- */
+    function toast(msg, error = false) {
+      const id = "t" + Date.now();
+      toastContainer.insertAdjacentHTML(
+        "beforeend",
+        `
+        <div id="${id}" class="toast text-white ${error ? "bg-danger" : "bg-success"}" role="alert">
+          <div class="d-flex">
+            <div class="toast-body">${msg}</div>
+            <button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          </div>
+        </div>`
+      );
+
+      const t = new bootstrap.Toast(document.getElementById(id), { delay: 3000 });
+      t.show();
+      setTimeout(() => document.getElementById(id)?.remove(), 3500);
+    }
+
+    /* ----------- ADD PRODUCT ----------- */
+    async function addProduct() {
+      const name = document.getElementById('productName').value;
+      const category = document.getElementById('productCategory').value;
+      const description = document.getElementById('productDescription').value;
+      const initialStock = parseInt(document.getElementById('initialStock').value);
+      
+      if (!name || !category) {
+        toast('Product name and category are required!', true);
+        return;
+      }
+
+      const fractions = [];
+      const fractionElements = document.querySelectorAll('#fractionsContainer .fraction-item');
+      
+      if (fractionElements.length === 0) {
+        toast('At least one fraction is required!', true);
+        return;
+      }
+
+      for (const item of fractionElements) {
+        const quantity = parseFloat(item.querySelector('.fraction-quantity').value);
+        const unit = item.querySelector('.fraction-unit').value;
+        const price = parseFloat(item.querySelector('.fraction-price').value);
+        
+        if (isNaN(quantity) || isNaN(price) || !unit) {
+          toast('Please fill all fraction fields correctly!', true);
+          return;
+        }
+
+        fractions.push({
+          quantity: quantity,
+          unit: unit,
+          price: price,
+          stock: initialStock
+        });
+      }
+
+      try {
+        await addDoc(collection(db, "products"), {
+          name,
+          category,
+          description,
+          fractions,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        
+        toast('Product added successfully!');
+        
+        // Reset form
+        document.getElementById('addProductForm').reset();
+        document.getElementById('fractionsContainer').innerHTML = `
+          <div class="fraction-item border p-3 rounded mb-2">
+            <div class="row g-2">
+              <div class="col-4">
+                <input type="number" class="form-control fraction-quantity" placeholder="Quantity" required min="0" step="0.01">
+              </div>
+              <div class="col-4">
+                <select class="form-select fraction-unit" required>
+                  <option value="">Unit</option>
+                  <option value="kg">kg</option>
+                  <option value="g">g</option>
+                  <option value="L">L</option>
+                  <option value="ml">ml</option>
+                  <option value="pcs">pcs</option>
+                  <option value="pack">pack</option>
+                  <option value="bottle">bottle</option>
+                  <option value="box">box</option>
+                </select>
+              </div>
+              <div class="col-4">
+                <input type="number" class="form-control fraction-price" placeholder="Price" required min="0" step="0.01">
+              </div>
+            </div>
+          </div>
+        `;
+        
+        // Hide modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
+        if (modal) modal.hide();
+      } catch (error) {
+        toast('Error adding product: ' + error.message, true);
+        console.error('Add product error:', error);
+      }
+    }
+
+    /* ----------- EDIT PRODUCT ----------- */
+    async function editProduct(id) {
+      currentProductId = id;
+      const productRef = doc(db, "products", id);
+      const productSnap = await getDoc(productRef);
+      
+      if (!productSnap.exists()) {
+        toast('Product not found!', true);
+        return;
+      }
+
+      const product = productSnap.data();
+      const formHtml = `
+        <form id="editProductFormInner">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Product Name</label>
+              <input type="text" class="form-control" id="editProductName" value="${product.name}" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Category</label>
+              <select class="form-select" id="editProductCategory" required>
+                <option value="food" ${product.category === 'food' ? 'selected' : ''}>Food</option>
+                <option value="beverages" ${product.category === 'beverages' ? 'selected' : ''}>Beverages</option>
+                <option value="snacks" ${product.category === 'snacks' ? 'selected' : ''}>Snacks</option>
+                <option value="household" ${product.category === 'household' ? 'selected' : ''}>Household</option>
+                <option value="personal-care" ${product.category === 'personal-care' ? 'selected' : ''}>Personal Care</option>
+                <option value="electronics" ${product.category === 'electronics' ? 'selected' : ''}>Electronics</option>
+                <option value="clothing" ${product.category === 'clothing' ? 'selected' : ''}>Clothing</option>
+                <option value="other" ${product.category === 'other' ? 'selected' : ''}>Other</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" id="editProductDescription" rows="2">${product.description || ''}</textarea>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Product Fractions</label>
+            <div id="editFractionsContainer">
+              ${product.fractions.map((frac, index) => `
+                <div class="fraction-item border p-3 rounded mb-2">
+                  <div class="row g-2">
+                    <div class="col-3">
+                      <input type="number" class="form-control" value="${frac.quantity}" placeholder="Quantity" required min="0" step="0.01">
+                    </div>
+                    <div class="col-3">
+                      <select class="form-select" required>
+                        <option value="kg" ${frac.unit === 'kg' ? 'selected' : ''}>kg</option>
+                        <option value="g" ${frac.unit === 'g' ? 'selected' : ''}>g</option>
+                        <option value="L" ${frac.unit === 'L' ? 'selected' : ''}>L</option>
+                        <option value="ml" ${frac.unit === 'ml' ? 'selected' : ''}>ml</option>
+                        <option value="pcs" ${frac.unit === 'pcs' ? 'selected' : ''}>pcs</option>
+                        <option value="pack" ${frac.unit === 'pack' ? 'selected' : ''}>pack</option>
+                        <option value="bottle" ${frac.unit === 'bottle' ? 'selected' : ''}>bottle</option>
+                        <option value="box" ${frac.unit === 'box' ? 'selected' : ''}>box</option>
+                      </select>
+                    </div>
+                    <div class="col-3">
+                      <input type="number" class="form-control" value="${frac.price}" placeholder="Price" required min="0" step="0.01">
+                    </div>
+                    <div class="col-3">
+                      <input type="number" class="form-control" value="${frac.stock}" placeholder="Stock" required min="0">
+                    </div>
+                  </div>
+                  ${index > 0 ? '<button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="this.parentElement.remove()"><i class="fas fa-trash me-1"></i> Remove</button>' : ''}
+                </div>
+              `).join('')}
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addEditFraction()">
+              <i class="fas fa-plus me-1"></i> Add Fraction
+            </button>
+          </div>
+        </form>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" onclick="deleteProduct('${id}')">
+            <i class="fas fa-trash me-1"></i> Delete Product
+          </button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="saveProduct()">Save Changes</button>
+        </div>
+      `;
+
+      document.getElementById('editProductForm').innerHTML = formHtml;
+      const editModal = new bootstrap.Modal(document.getElementById('editProductModal'));
+      editModal.show();
+    }
+
+    /* ----------- SAVE PRODUCT ----------- */
+    async function saveProduct() {
+      if (!currentProductId) return;
+
+      const name = document.getElementById('editProductName').value;
+      const category = document.getElementById('editProductCategory').value;
+      const description = document.getElementById('editProductDescription').value;
+      
+      if (!name || !category) {
+        toast('Product name and category are required!', true);
+        return;
+      }
+
+      const fractions = [];
+      const fractionElements = document.querySelectorAll('#editFractionsContainer .fraction-item');
+      
+      if (fractionElements.length === 0) {
+        toast('At least one fraction is required!', true);
+        return;
+      }
+
+      for (const item of fractionElements) {
+        const inputs = item.querySelectorAll('input, select');
+        const quantity = parseFloat(inputs[0].value);
+        const unit = inputs[1].value;
+        const price = parseFloat(inputs[2].value);
+        const stock = parseFloat(inputs[3].value);
+        
+        if (isNaN(quantity) || isNaN(price) || isNaN(stock) || !unit) {
+          toast('Please fill all fraction fields correctly!', true);
+          return;
+        }
+
+        fractions.push({
+          quantity: quantity,
+          unit: unit,
+          price: price,
+          stock: stock
+        });
+      }
+
+      try {
+        await updateDoc(doc(db, "products", currentProductId), {
+          name,
+          category,
+          description,
+          fractions,
+          updatedAt: serverTimestamp()
+        });
+        
+        toast('Product updated successfully!');
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
+        if (modal) modal.hide();
+      } catch (error) {
+        toast('Error updating product: ' + error.message, true);
+        console.error('Update product error:', error);
+      }
+    }
+
+    /* ----------- DELETE PRODUCT ----------- */
+    async function deleteProduct(id) {
+      if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+        try {
+          await deleteDoc(doc(db, "products", id));
+          toast('Product deleted successfully!');
+          const modal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
+          if (modal) modal.hide();
+        } catch (error) {
+          toast('Error deleting product: ' + error.message, true);
+          console.error('Delete product error:', error);
+        }
+      }
+    }
+
+    /* ----------- SELL FUNCTION ----------- */
+    async function sell(id, idx) {
+      const ref = doc(db, "products", id);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) return;
+
+      const data = snap.data();
+      const f = data.fractions[idx];
+
+      if (f.stock <= 0) {
+        toast('Out of stock!', true);
+        return;
+      }
+
+      f.stock--;
+
+      try {
+        await updateDoc(ref, { fractions: data.fractions });
+        await addDoc(collection(db, "sales"), {
+          productId: id,
+          fractionIndex: idx,
+          price: f.price,
+          productName: data.name,
+          fraction: `${f.quantity} ${f.unit}`,
+          timestamp: serverTimestamp(),
+        });
+
+        toast(`Sold ${f.quantity} ${f.unit} of ${data.name}`);
+      } catch (error) {
+        toast('Error processing sale: ' + error.message, true);
+        console.error('Sell error:', error);
+      }
+    }
+
+    /* ----------- RESTOCK FUNCTION ----------- */
+    async function restock(id, idx) {
+      const ref = doc(db, "products", id);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) return;
+
+      const data = snap.data();
+      const f = data.fractions[idx];
+
+      const amt = prompt(`Restock ${f.quantity} ${f.unit} (current stock: ${f.stock}):`, "10");
+      if (!amt || isNaN(amt) || +amt <= 0) return;
+
+      f.stock += +amt;
+
+      try {
+        await updateDoc(ref, { fractions: data.fractions });
+        toast(`Restocked ${amt} units of ${f.quantity} ${f.unit}`);
+      } catch (error) {
+        toast('Error restocking: ' + error.message, true);
+        console.error('Restock error:', error);
+      }
+    }
+
+    /* ----------- RENDER PRODUCTS ----------- */
+    function renderProducts() {
+      onSnapshot(collection(db, "products"), snap => {
+        els.tbody.innerHTML = "";
+        
+        let visible = 0;
+        let lowStock = 0;
+        let outOfStock = 0;
+
+        snap.forEach(docu => {
+          const p = docu.data();
+          const id = docu.id;
+
+          // Check stock status
+          let hasLow = false;
+          let hasOut = false;
+          p.fractions.forEach(f => {
+            if (f.stock < 5 && f.stock > 0) hasLow = true;
+            if (f.stock <= 0) hasOut = true;
+          });
+
+          if (hasLow) lowStock++;
+          if (hasOut) outOfStock++;
+
+          // Build fractions HTML
+          let fractionsHTML = "";
+          p.fractions.forEach((f, i) => {
+            fractionsHTML += `
+              <div class="fraction-item small">
+                <span>${f.quantity} ${f.unit}</span>
+                <span>Ksh ${f.price.toFixed(2)}</span>
+                <span class="badge ${f.stock <= 0 ? 'badge-out' : f.stock < 5 ? 'badge-low' : 'bg-success'}">
+                  ${f.stock <= 0 ? 'Out' : f.stock}
+                </span>
+              </div>
+            `;
+          });
+
+          // Build actions HTML
+          let actionHTML = `
+            <div class="action-buttons">
+              <button class="btn btn-sm btn-primary" onclick="editProduct('${id}')">
+                <i class="fas fa-edit"></i>
+              </button>
+          `;
+
+          p.fractions.forEach((f, i) => {
+            actionHTML += `
+              <button class="btn btn-sm btn-success" onclick="sell('${id}', '${i}')">
+                <i class="fas fa-cart-plus"></i>
+              </button>
+              <button class="btn btn-sm btn-warning" onclick="restock('${id}', '${i}')">
+                <i class="fas fa-box"></i>
+              </button>
+            `;
+          });
+
+          actionHTML += `</div>`;
+
+          // Add row
+          els.tbody.insertAdjacentHTML(
+            "beforeend",
+            `
+            <tr>
+              <td>
+                <strong>${p.name}</strong>
+                ${p.description ? `<br><small class="text-muted">${p.description.substring(0, 30)}...</small>` : ''}
+              </td>
+              <td>
+                <span class="badge bg-info">${p.category || 'Uncategorized'}</span>
+              </td>
+              <td>${fractionsHTML}</td>
+              <td>
+                ${hasOut ? '<span class="badge badge-out">Out of Stock</span>' : 
+                  hasLow ? '<span class="badge badge-low">Low Stock</span>' : 
+                  '<span class="badge bg-success">In Stock</span>'}
+              </td>
+              <td>${actionHTML}</td>
+            </tr>
+            `
+          );
+
+          visible++;
+        });
+
+        // Update counters
+        els.totalProducts.textContent = snap.size;
+        els.lowStockCount.textContent = lowStock;
+        els.lowStockItems.textContent = lowStock;
+        els.outOfStockItems.textContent = outOfStock;
+        els.info.textContent = `Showing ${visible} of ${snap.size} products`;
+      });
+    }
+
+    /* ----------- LOAD RECENT ORDERS ----------- */
+    function loadRecentOrders() {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      onSnapshot(
+        query(
+          collection(db, "sales"),
+          where("timestamp", ">=", Timestamp.fromDate(todayStart))
+        ),
+        snap => {
+          let ordersHTML = '';
+          let totalSales = 0;
+          let orderCount = 0;
+          let recentOrders = [];
+
+          snap.forEach(docu => {
+            const order = docu.data();
+            recentOrders.push(order);
+            totalSales += order.price || 0;
+            orderCount++;
+          });
+
+          // Sort by timestamp (newest first)
+          recentOrders.sort((a, b) => b.timestamp?.toDate() - a.timestamp?.toDate());
+
+          // Display only last 5 orders
+          recentOrders.slice(0, 5).forEach(order => {
+            const time = order.timestamp?.toDate();
+            const timeStr = time ? time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
+            
+            ordersHTML += `
+              <div class="fraction-item">
+                <div>
+                  <strong>${order.productName || 'Product'}</strong>
+                  <div class="small text-muted">${order.fraction || ''}</div>
+                </div>
+                <div class="text-end">
+                  <div class="text-success">Ksh ${order.price?.toFixed(2) || '0.00'}</div>
+                  <small class="text-muted">${timeStr}</small>
+                </div>
+              </div>
+            `;
+          });
+
+          if (recentOrders.length === 0) {
+            ordersHTML = '<p class="text-muted text-center">No orders today</p>';
+          }
+
+          els.recentOrders.innerHTML = ordersHTML;
+          els.todaySalesTotal.textContent = `Ksh ${totalSales.toFixed(2)}`;
+          els.ordersToday.textContent = orderCount;
+          els.totalOrders.textContent = orderCount;
+        }
+      );
+    }
+
+    /* ----------- LOAD TOTAL REVENUE ----------- */
+    async function loadTotalRevenue() {
+      try {
+        const salesSnap = await getDocs(collection(db, "sales"));
+        let totalRevenue = 0;
+        salesSnap.forEach(doc => {
+          totalRevenue += doc.data().price || 0;
+        });
+        els.totalRevenue.textContent = `Ksh ${totalRevenue.toFixed(2)}`;
+      } catch (error) {
+        console.error("Error loading revenue:", error);
+      }
+    }
+
+    /* ----------- LOAD CUSTOMER COUNT ----------- */
+    async function loadCustomerCount() {
+      try {
+        // For now, we'll set a placeholder value
+        // In a real app, you would query your customers collection
+        els.totalCustomers.textContent = "24";
+      } catch (error) {
+        console.error("Error loading customer count:", error);
+      }
+    }
+
+    /* ----------- EXPORT DATA ----------- */
+    function exportData() {
+      toast('Export feature coming soon!');
+    }
+
+    /* ----------- SETUP EVENT LISTENERS ----------- */
+    function setupEventListeners() {
+      // Add product buttons
+      els.addProductBtn.addEventListener('click', () => {
+        new bootstrap.Modal(document.getElementById('addProductModal')).show();
+      });
+      
+      els.addProductBtnMain.addEventListener('click', () => {
+        new bootstrap.Modal(document.getElementById('addProductModal')).show();
+      });
+
+      // Save product button
+      els.saveProductBtn.addEventListener('click', addProduct);
+
+      // Export data button
+      els.exportDataBtn.addEventListener('click', exportData);
+
+      // Search functionality
+      document.getElementById('searchInput').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = els.tbody.querySelectorAll('tr');
+        
+        rows.forEach(row => {
+          const text = row.textContent.toLowerCase();
+          row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+      });
+
+      // Add fraction button
+      document.getElementById('addFractionBtn').addEventListener('click', window.addFraction);
+    }
+
+    /* ----------- INITIALIZE DASHBOARD ----------- */
+    function initDashboard() {
+      initializeDate();
+      renderProducts();
+      loadRecentOrders();
+      loadTotalRevenue();
+      loadCustomerCount();
+      setupEventListeners();
+
+      // Welcome toast
+      setTimeout(() => toast("Admin dashboard loaded successfully!"), 1000);
+    }
+
+    /* ----------- START APP ----------- */
+    document.addEventListener('DOMContentLoaded', initDashboard);
+  </script>
+</body>
+</html>
